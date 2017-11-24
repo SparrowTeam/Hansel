@@ -90,11 +90,13 @@
             "id": <идентификатор метки>,
             "name": <название места, если присутсвует>,
             "updated_datetime": <дата последнего обновления метки>
+            "value": <int, ценность метки>,
             "team_id":
             "coordinates":
                 {
                     "longtitude": <float, долгота>,
-                    "latitude": <float, широта>
+                    "latitude": <float, широта>,
+                    "code": <str, строка, которая однозначно идентифицирует точку>
                 }
         }
    ]
@@ -123,8 +125,10 @@
             "coordinates":
                 {
                     "longtitude": <float, долгота>,
-                    "latitude": <float, широта>
+                    "latitude": <float, широта>,
+                    "code": <str, строка, которая однозначно идентифицирует точку>
                 }
+            "value": <int, ценность метки>,
             "users": [
                 {
                     "id": <строка>,
@@ -174,7 +178,8 @@
             "coordinates":
                 {
                     "longtitude": <float, долгота>,
-                    "latitude": <float, широта>
+                    "latitude": <float, широта>,
+                    "code": <str, строка, которая однозначно идентифицирует точку>
                 }
             "photos": [
                 <идентификаторы фотографий>,
