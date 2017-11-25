@@ -154,5 +154,14 @@ def mark_info(mark_id=None):
                 'altitude':  mark.altitude,
                 'code':  mark.code
             },
-
-        })
+            'team': {
+                'id': mark.team.id,
+                'color': mark.team.name
+            },
+            'users': [
+                {
+                    'id': ''
+                } for user in mark.user
+            ]
+        }
+        )

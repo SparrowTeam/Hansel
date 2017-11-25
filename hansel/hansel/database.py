@@ -1,7 +1,6 @@
 from peewee import Model, CharField, DateTimeField, IntegerField, \
     ForeignKeyField, FloatField, TextField, UUIDField, IntegrityError, \
     SqliteDatabase, PrimaryKeyField
-# from playhouse.pool import PooledSqliteDatabase
 
 from datetime import datetime
 from flask import abort, request
@@ -149,8 +148,8 @@ def create_tables():
         Team.select().get()
     except Team.DoesNotExist:
         for n, c in (
-                ('Sithes', '#FFFFFF'),
-                ('Jedi', '#000000')
+                ('Sithes', '#70FF0000'),
+                ('Jedi', '#70000FFF')
         ):
             Team.create(name=n, color=c)
 
