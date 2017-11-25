@@ -1,7 +1,7 @@
-from flask import Flask
-from flask import request, jsonify, abort, make_response
+from flask import Flask, request, jsonify, abort, make_response, \
+    send_from_directory
 from database import db, User, transaction_wrapper, Team, IntegrityError, \
-    Mark, Photo, MarksPhotos
+    Mark, Photo, MarksPhotos, MarkUsersHitory, SelectQuery
 from base64 import b64encode, b64decode
 from functools import wraps
 from werkzeug.utils import secure_filename
@@ -14,10 +14,10 @@ app = Flask('hansel')
 MEDIA_DIR = Path(dirname(abspath(__file__))) / 'media'
 
 
-def is_authorized(func, *args, **kwargs):
+def is_authorized(func):
 
     @wraps(func)
-    def wrapped():
+    def wrapped(*args, **kwargs):
         token = request.headers.get('X-API-TOKEN')
         if token is None:
             return error(409, 'Head X-API-TOKEN is reqiered')
@@ -25,7 +25,7 @@ def is_authorized(func, *args, **kwargs):
             request.current_user = User.get(User.email == b64decode(token))
             return func(*args, **kwargs)
         except User.DoesNotExist:
-            return error(404, "User with token {} not found".format(token))
+            return error(408, "User with token {} not found".format(token))
 
     return wrapped
 
@@ -84,10 +84,14 @@ def register_mark(mark_id):
         current_user=request.current_user,
         **body['coordinates']
     )
+    MarkUsersHitory.create(
+        mark=mark,
+        user=request.current_user
+    )
     for photo_id in body['photos']:
         MarksPhotos.create(
             mark=mark,
-            photo=photo_id
+            photo=Photo.select().where(Photo.photo_id == photo_id).get()
         )
     return jsonify({'mark_id': mark_id})
 
@@ -105,8 +109,8 @@ def upload_photo():
     new_file.save(str(MEDIA_DIR / file_name))
     return jsonify([file_name])
 
-@app.route('/mark/<mark_id>/status', methods=['GET'])
 @transaction_wrapper
+@app.route('/mark/<mark_id>/status', methods=['GET'])
 @is_authorized
 def mark_status(mark_id):
     try:
@@ -123,45 +127,50 @@ def mark_status(mark_id):
     mark.update_mark_owner(request.current_user)
     return error(200, 'Conquere thouse mark')
 
-@app.route('/marks/<mark_id>', methods=['GET'])
 @transaction_wrapper
+@app.route('/marks/<mark_id>', methods=['GET'])
 @is_authorized
-def mark_info(mark_id=None):
-    prepared_query = (Mark
-                      .select(Mark, User, Team)
-                      .join(User)
-                      .join(Team))
-    if mark_id is None:
+def mark_info(mark_id):
+    return _marks_info(mark_id)
+
+@transaction_wrapper
+@app.route('/marks', methods=['GET'])
+@is_authorized
+def marks():
+    return _marks_info()
+
+@transaction_wrapper
+@app.route('/user/marks', methods=['GET'])
+@is_authorized
+def user_own_marks():
+    return _marks_info(user=request.current_user)
+
+@transaction_wrapper
+@app.route('/user/marks/<user_id>', methods=['GET'])
+@is_authorized
+def user_marks(user_id):
+    return _marks_info(user=User.select().where(User.id == user_id).get())
+
+def _marks_info(mark_id=None, user=None):
+    prepared_query = Mark.select()
+    if not (mark_id is None):
         prepared_query = prepared_query.where(Mark.hardware_id == mark_id)
+    if not (user is None):
+        prepared_query = prepared_query.where(Mark.current_user == user)
+
     try:
-        marks = prepared_query.get()
+        marks = prepared_query.execute()
     except Mark.DoesNotExist:
         return error(202, 'Can register thouse mark')
 
     marks_list = []
     for mark in marks:
-        marks_list.append({
-            'id': mark.hardware_id,
-            'related_datetime': {
-                'registered': mark.registred_at,
-                'updated': mark.updated_at
-            },
-            'name': mark.name,
-            'value': mark.value,
-            'coordinates': {
-                'longtitude': mark.longtitude,
-                'latitude':  mark.longtitude,
-                'altitude':  mark.altitude,
-                'code':  mark.code
-            },
-            'team': {
-                'id': mark.team.id,
-                'color': mark.team.name
-            },
-            'users': [
-                {
-                    'id': ''
-                } for user in mark.user
-            ]
-        }
-        )
+        marks_list.append(mark.get_info())
+    if not (mark_id is None):
+        marks_list = marks_list[0]
+    return jsonify(marks_list)
+
+@app.route('/photo/<image_id>', methods=['GET'])
+@is_authorized
+def get_image(image_id):
+    return send_from_directory(MEDIA_DIR, image_id)

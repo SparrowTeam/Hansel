@@ -1,6 +1,6 @@
 from peewee import Model, CharField, DateTimeField, IntegerField, \
     ForeignKeyField, FloatField, TextField, UUIDField, IntegrityError, \
-    SqliteDatabase, PrimaryKeyField
+    SqliteDatabase, PrimaryKeyField, SelectQuery
 
 from datetime import datetime
 from flask import abort, request
@@ -90,6 +90,42 @@ class Mark(BaseModel):
                 Mark.current_user == user)
         )
 
+    def get_info(self):
+        mark = (Mark
+                .select(Mark)
+                .where(Mark.id == self.id)
+                .get())
+        records = MarkUsersHitory.select().where(MarkUsersHitory.mark == self)
+        photos = MarksPhotos.select().where(MarksPhotos.mark == self)
+        return {
+            'id': mark.hardware_id,
+            'related_datetime': {
+                'registered': mark.registred_at,
+                'updated': mark.updated_at
+            },
+            'name': mark.name,
+            'value': mark.value,
+            'coordinates': {
+                'longtitude': mark.longtitude,
+                'latitude':  mark.latitude,
+                'altitude':  mark.altitude,
+                'code':  mark.code
+            },
+            'team': {
+                'id': mark.current_user.team.id,
+                'color': mark.current_user.team.color
+            },
+            'users': [{
+                'id': rec.user.id,
+                'name': rec.user.name,
+                'team_color': rec.user.team.color
+            } for rec in records],
+            'photos': [
+                '/photo/{}'.format(p.photo.photo_id) for p in photos
+            ]
+        }
+
+
 
 class MarkUsersHitory(BaseModel):
 
@@ -102,30 +138,11 @@ class MarkUsersHitory(BaseModel):
             (('user', 'mark'), True),
         )
 
-# class Comment(BaseModel):
-
-#     id = PrimaryKeyField()
-#     created_at = DateTimeField(default=datetime.utcnow())
-#     text = TextField()
-
-#     user = ForeignKeyField(User, related_name='commanted_by')
-#     mark = ForeignKeyField(Mark, related_name='commented_on')
-
-#     class Meta:
-#         indexes = (
-#             (('user', 'mark'), True),
-#         )
-
 
 class Photo(BaseModel):
 
     id = PrimaryKeyField()
     photo_id = UUIDField(unique=True, index=True)
-
-    # longtitude = FloatField()
-    # latitude = FloatField()
-    # altitude = FloatField()
-    # code = CharField()
 
 class MarksPhotos(BaseModel):
 
@@ -153,10 +170,10 @@ def create_tables():
         ):
             Team.create(name=n, color=c)
 
-def transaction_wrapper(func, *args, **kwargs):
+def transaction_wrapper(func):
 
     @wraps(func)
-    def wrapped():
+    def wrapped(*args, **kwargs):
         try:
             with db.transaction():
                 log.debug('Handle request %s', request)
