@@ -14,7 +14,7 @@ setup(
     ),
     entry_points={
         'console_scripts': [
-            'hansel_run= hansel.start_application:start',
+            'hansel_run= hansel.app',
         ]
     },
     install_requires=[
