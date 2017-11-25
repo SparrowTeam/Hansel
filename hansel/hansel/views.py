@@ -82,7 +82,6 @@ def register_mark(mark_id):
         name=body['name'],
         value=5,
         current_user=request.current_user,
-        registred_at=body['registred_at'],
         **body['coordinates']
     )
     for photo_id in body['photos']:
@@ -90,7 +89,7 @@ def register_mark(mark_id):
             mark=mark,
             photo=photo_id
         )
-    abort(200)
+    return jsonify({'mark_id': mark_id})
 
 @app.route('/photo', methods=['POST'])
 @transaction_wrapper
@@ -98,13 +97,62 @@ def register_mark(mark_id):
 def upload_photo():
     if len(request.files) == 0:
         return error(404, "No one file wasn't sended")
-    files = []
-    for new_file in request.files:
-        file_name = str(uuid4())
-        Photo.create(
-            photo_id=file_name
-        )
-        new_file.save(MEDIA_DIR, file_name)
-        files.append(file_name)
+    new_file = request.files['upload']
+    file_name = str(uuid4())
+    Photo.create(
+        photo_id=file_name
+    )
+    new_file.save(str(MEDIA_DIR / file_name))
+    return jsonify([file_name])
 
-    return jsonify(files)
+@app.route('/mark/<mark_id>/status', methods=['GET'])
+@transaction_wrapper
+@is_authorized
+def mark_status(mark_id):
+    try:
+        mark = (Mark
+                .select(Mark, User)
+                .join(User)
+                .where(Mark.hardware_id == mark_id).get())
+    except Mark.DoesNotExist:
+        return error(202, 'Can register thouse mark')
+    if mark.current_user.id == request.current_user.id:
+        return error(201, 'It is your own mark')
+    if mark.current_user.team == request.current_user.team:
+        return error(403, 'Your team owns thouse mark')
+    mark.update_mark_owner(request.current_user)
+    return error(200, 'Conquere thouse mark')
+
+@app.route('/marks/<mark_id>', methods=['GET'])
+@transaction_wrapper
+@is_authorized
+def mark_info(mark_id=None):
+    prepared_query = (Mark
+                      .select(Mark, User, Team)
+                      .join(User)
+                      .join(Team))
+    if mark_id is None:
+        prepared_query = prepared_query.where(Mark.hardware_id == mark_id)
+    try:
+        marks = prepared_query.get()
+    except Mark.DoesNotExist:
+        return error(202, 'Can register thouse mark')
+
+    marks_list = []
+    for mark in marks:
+        marks_list.append({
+            'id': mark.hardware_id,
+            'related_datetime': {
+                'registered': mark.registred_at,
+                'updated': mark.updated_at
+            },
+            'name': mark.name,
+            'value': mark.value,
+            'coordinates': {
+                'longtitude': mark.longtitude,
+                'latitude':  mark.longtitude,
+                'altitude':  mark.altitude,
+                'code':  mark.code
+            },
+
+        })

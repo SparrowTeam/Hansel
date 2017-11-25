@@ -45,7 +45,11 @@ class User(BaseModel):
     team = ForeignKeyField(Team)
 
     def info(self):
-        info = User.select(User, Team).join(Team).where(User.id == self.id).get()
+        info = (
+            User
+            .select(User, Team)
+            .join(Team)
+            .where(User.id == self.id).get())
         return {
             "name": info.name,
             "team": {
@@ -75,6 +79,18 @@ class Mark(BaseModel):
     updated_at = DateTimeField(null=True)
 
     current_user = ForeignKeyField(User, related_name='who_owns')
+
+    def update_mark_owner(self, user):
+        (
+            Mark
+            .update(
+                current_user=ser,
+                updatetd_at=datetime.utcnow())
+            .where(
+                Mark.id == self.id,
+                Mark.current_user == user)
+        )
+
 
 class MarkUsersHitory(BaseModel):
 
