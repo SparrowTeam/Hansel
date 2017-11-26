@@ -1,0 +1,56 @@
+# -*- restclient -*-
+
+#
+POST http://localhost:8080/user/register
+Content-Type: application/json
+
+{
+        "email": "f@b",
+        "password": "bt",
+        "name": "Foo Barych"
+}
+
+#
+POST http://localhost:8080/user/login
+Content-Type: application/json
+
+{
+        "email": "foo2@baaz.ru",
+        "password": "barbaz-secret"
+}
+
+#
+GET http://localhost:8080/user/info
+X-API-TOKEN: ZkBi
+
+#
+POST http://localhost:8080/photo
+Content-type: multipart/form-data
+# X-API-TOKEN: Zm9vMUBiYWF6LnJ1
+
+< /home/szobov/Downloads/default.jpg
+
+#
+POST http://localhost:8080/mark/fooobar5
+X-API-TOKEN: ZkBi
+Content-Type: application/json
+
+{
+        "name": "Luga v Peterburge, dno1",
+        "coordinates": {
+            "longtitude": "30.334096",
+            "latitude": "59.848605",
+            "altitude": "40.404490",
+            "code": "5RESDEF+9"
+        },
+        "photos": ["43d52d50d3fc4a0cb27b07be9cfe5171"],
+        "register_datetime": "1488"
+}
+
+#
+GET http://localhost:8080/marks
+X-API-TOKEN: ZkBi
+
+GET http://localhost:8080/user/marks/1
+X-API-TOKEN: ZkBi
+# X-API-TOKEN: Z#m9vMkBiYWF6LnJ1
