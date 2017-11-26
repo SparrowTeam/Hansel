@@ -98,6 +98,13 @@ class Mark(BaseModel):
                 Mark.id == self.id)
             .execute()
         )
+        (
+            MarkUsersHitory
+            .create(
+                mark=self,
+                user=user
+            )
+        )
 
     def get_info(self):
         mark = (Mark
@@ -146,7 +153,7 @@ class MarkUsersHitory(BaseModel):
 
     class Meta:
         indexes = (
-            (('user', 'mark'), True),
+            (('user', 'mark'), False),
         )
 
 
