@@ -111,6 +111,7 @@ def upload_photo():
 @is_authorized
 def upload_user_photo():
     request.current_user.update_photo(_upload_photo())
+    return error(200, "Yay!")
 
 def _upload_photo():
     if len(request.files) == 0:

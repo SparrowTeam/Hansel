@@ -2,6 +2,7 @@ import logging as log
 from datetime import datetime
 from functools import wraps
 from random import randint
+from itertools import cycle
 
 from flask import abort, request
 from peewee import (CharField, DateTimeField, FloatField, ForeignKeyField,
@@ -9,6 +10,8 @@ from peewee import (CharField, DateTimeField, FloatField, ForeignKeyField,
                     SelectQuery, SqliteDatabase, TextField, UUIDField)
 
 db = SqliteDatabase(database='hansel.db')
+
+mebious_line = cycle([1, 2])
 
 
 class BaseModel(Model):
@@ -25,9 +28,9 @@ class Team(BaseModel):
 
     @staticmethod
     def get_random_team():
-        a = Team.select()
-        team_counts = randint(1, a.count())
-        return Team.get(Team.id == team_counts)
+        q = Team.select()
+        _team_id = int(next(mebious_line))
+        return Team.get(Team.id == _team_id)
 
 
 class User(BaseModel):
