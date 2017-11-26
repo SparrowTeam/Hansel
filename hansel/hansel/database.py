@@ -104,7 +104,10 @@ class Mark(BaseModel):
                 .select(Mark)
                 .where(Mark.id == self.id)
                 .get())
-        records = MarkUsersHitory.select().where(MarkUsersHitory.mark == self)
+        records = (MarkUsersHitory
+                   .select()
+                   .where(MarkUsersHitory.mark == self)
+                   .order_by(-MarkUsersHitory.id))
         photos = MarksPhotos.select().where(MarksPhotos.mark == self)
         return {
             'id': mark.hardware_id,
