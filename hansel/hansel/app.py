@@ -1,4 +1,4 @@
-from database import db, create_tables
+from database import create_tables, db
 from views import app
 
 
@@ -12,6 +12,7 @@ def after_req(response):
     db.close()
     return response
 
+
 def main():
     create_tables()
     app.run(
@@ -20,5 +21,6 @@ def main():
         debug=True
     )
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()

@@ -1,12 +1,12 @@
-from peewee import Model, CharField, DateTimeField, IntegerField, \
-    ForeignKeyField, FloatField, TextField, UUIDField, IntegrityError, \
-    SqliteDatabase, PrimaryKeyField, SelectQuery
-
-from datetime import datetime
-from flask import abort, request
-from functools import wraps
 import logging as log
+from datetime import datetime
+from functools import wraps
 from random import randint
+
+from flask import abort, request
+from peewee import (CharField, DateTimeField, FloatField, ForeignKeyField,
+                    IntegerField, IntegrityError, Model, PrimaryKeyField,
+                    SelectQuery, SqliteDatabase, TextField, UUIDField)
 
 db = SqliteDatabase(database='hansel.db')
 
@@ -14,7 +14,7 @@ db = SqliteDatabase(database='hansel.db')
 class BaseModel(Model):
 
     class Meta:
-        database=db
+        database = db
 
 
 class Team(BaseModel):
@@ -28,7 +28,6 @@ class Team(BaseModel):
         a = Team.select()
         team_counts = randint(1, a.count())
         return Team.get(Team.id == team_counts)
-
 
 
 class User(BaseModel):
@@ -59,7 +58,6 @@ class User(BaseModel):
         }
 
 
-
 class Mark(BaseModel):
 
     id = PrimaryKeyField()
@@ -72,7 +70,7 @@ class Mark(BaseModel):
 
     name = CharField(null=True)
 
-    value = IntegerField(default=5)
+    value = IntegerField(default=100)
 
     registred_at = DateTimeField(default=datetime.utcnow())
     updated_at = DateTimeField(null=True)
@@ -107,9 +105,9 @@ class Mark(BaseModel):
             'value': mark.value,
             'coordinates': {
                 'longtitude': mark.longtitude,
-                'latitude':  mark.latitude,
-                'altitude':  mark.altitude,
-                'code':  mark.code
+                'latitude': mark.latitude,
+                'altitude': mark.altitude,
+                'code': mark.code
             },
             'team': {
                 'id': mark.current_user.team.id,
@@ -124,7 +122,6 @@ class Mark(BaseModel):
                 '/photo/{}'.format(p.photo.photo_id) for p in photos
             ]
         }
-
 
 
 class MarkUsersHitory(BaseModel):
@@ -144,6 +141,7 @@ class Photo(BaseModel):
     id = PrimaryKeyField()
     photo_id = UUIDField(unique=True, index=True)
 
+
 class MarksPhotos(BaseModel):
 
     id = PrimaryKeyField()
@@ -158,7 +156,7 @@ class MarksPhotos(BaseModel):
 
 def create_tables():
     db.connect()
-    db.create_tables([Team, User, Mark, MarkUsersHitory, # Comment,
+    db.create_tables([Team, User, Mark, MarkUsersHitory,  # Comment,
                       Photo,
                       MarksPhotos], True)
     try:
@@ -169,6 +167,7 @@ def create_tables():
                 ('Jedi', '#70000FFF')
         ):
             Team.create(name=n, color=c)
+
 
 def transaction_wrapper(func):
 

@@ -1,13 +1,15 @@
-from flask import Flask, request, jsonify, abort, make_response, \
-    send_from_directory
-from database import db, User, transaction_wrapper, Team, IntegrityError, \
-    Mark, Photo, MarksPhotos, MarkUsersHitory, SelectQuery
-from base64 import b64encode, b64decode
+from base64 import b64decode, b64encode
 from functools import wraps
-from werkzeug.utils import secure_filename
-from pathlib import Path
 from os.path import abspath, dirname
+from pathlib import Path
+from random import randint
 from uuid import uuid4
+
+from flask import (Flask, abort, jsonify, make_response, request,
+                   send_from_directory)
+
+from database import (IntegrityError, Mark, MarksPhotos, MarkUsersHitory,
+                      Photo, SelectQuery, Team, User, db, transaction_wrapper)
 
 app = Flask('hansel')
 
@@ -28,6 +30,7 @@ def is_authorized(func):
             return error(408, "User with token {} not found".format(token))
 
     return wrapped
+
 
 def error(code, mess):
     resp = jsonify({'error': mess})
@@ -72,6 +75,7 @@ def user_login():
 def user_info():
     return jsonify(request.current_user.info())
 
+
 @app.route('/mark/<mark_id>', methods=['POST'])
 @transaction_wrapper
 @is_authorized
@@ -80,7 +84,7 @@ def register_mark(mark_id):
     mark = Mark.create(
         hardware_id=mark_id,
         name=body['name'],
-        value=5,
+        value=randint(100, 1000),
         current_user=request.current_user,
         **body['coordinates']
     )
@@ -95,6 +99,7 @@ def register_mark(mark_id):
         )
     return jsonify({'mark_id': mark_id})
 
+
 @app.route('/photo', methods=['POST'])
 @transaction_wrapper
 @is_authorized
@@ -108,6 +113,7 @@ def upload_photo():
     )
     new_file.save(str(MEDIA_DIR / file_name))
     return jsonify({'image_id': file_name})
+
 
 @transaction_wrapper
 @app.route('/mark/<mark_id>/status', methods=['GET'])
@@ -127,11 +133,13 @@ def mark_status(mark_id):
     mark.update_mark_owner(request.current_user)
     return error(200, 'Conquere thouse mark')
 
+
 @transaction_wrapper
 @app.route('/marks/<mark_id>', methods=['GET'])
 @is_authorized
 def mark_info(mark_id):
     return _marks_info(mark_id)
+
 
 @transaction_wrapper
 @app.route('/marks', methods=['GET'])
@@ -139,17 +147,20 @@ def mark_info(mark_id):
 def marks():
     return _marks_info()
 
+
 @transaction_wrapper
 @app.route('/user/marks', methods=['GET'])
 @is_authorized
 def user_own_marks():
     return _marks_info(user=request.current_user)
 
+
 @transaction_wrapper
 @app.route('/user/marks/<user_id>', methods=['GET'])
 @is_authorized
 def user_marks(user_id):
     return _marks_info(user=User.select().where(User.id == user_id).get())
+
 
 def _marks_info(mark_id=None, user=None):
     prepared_query = Mark.select()
@@ -169,6 +180,7 @@ def _marks_info(mark_id=None, user=None):
     if not (mark_id is None):
         marks_list = marks_list[0]
     return jsonify(marks_list)
+
 
 @app.route('/photo/<image_id>', methods=['GET'])
 @is_authorized
