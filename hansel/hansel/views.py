@@ -76,7 +76,7 @@ def user_info():
     return jsonify(request.current_user.info())
 
 
-@app.route('/mark/<mark_id>', methods=['POST'])
+@app.route('/marks/<mark_id>', methods=['POST'])
 @transaction_wrapper
 @is_authorized
 def register_mark(mark_id):
@@ -92,10 +92,10 @@ def register_mark(mark_id):
         mark=mark,
         user=request.current_user
     )
-    for photo_id in body['photos']:
+    for photo in body['photos']:
         MarksPhotos.create(
             mark=mark,
-            photo=Photo.select().where(Photo.photo_id == photo_id).get()
+            photo=Photo.select().where(Photo.photo_id == photo['image_id']).get()
         )
     return jsonify({'mark_id': mark_id})
 
@@ -104,6 +104,15 @@ def register_mark(mark_id):
 @transaction_wrapper
 @is_authorized
 def upload_photo():
+    return jsonify({'image_id': _upload_photo()})
+
+@app.route('/user/photo', methods=['POST'])
+@transaction_wrapper
+@is_authorized
+def upload_user_photo():
+    request.current_user.update_photo(_upload_photo())
+
+def _upload_photo():
     if len(request.files) == 0:
         return error(404, "No one file wasn't sended")
     new_file = request.files['upload']
@@ -112,7 +121,7 @@ def upload_photo():
         photo_id=file_name
     )
     new_file.save(str(MEDIA_DIR / file_name))
-    return jsonify({'image_id': file_name})
+    return file_name
 
 
 @transaction_wrapper

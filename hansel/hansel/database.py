@@ -40,7 +40,14 @@ class User(BaseModel):
 
     token = CharField()
 
+    photo = CharField(null=True)
+
     team = ForeignKeyField(Team)
+
+    def update_photo(self, photo_id):
+        (User
+         .update(photo='/photo/{}'.format(photo_id))
+         .where(User.id == self.id))
 
     def info(self):
         info = (
@@ -50,6 +57,7 @@ class User(BaseModel):
             .where(User.id == self.id).get())
         return {
             "name": info.name,
+            "photo": info.photo,
             "team": {
                 "id": info.team.id,
                 "name": info.team.name,
@@ -175,7 +183,6 @@ def transaction_wrapper(func):
     def wrapped(*args, **kwargs):
         try:
             with db.transaction():
-                log.debug('Handle request %s', request)
                 return func(*args, **kwargs)
         except Exception as e:
             db.close()
