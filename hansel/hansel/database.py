@@ -92,11 +92,11 @@ class Mark(BaseModel):
         (
             Mark
             .update(
-                current_user=ser,
-                updatetd_at=datetime.utcnow())
+                current_user=user,
+                updated_at=datetime.utcnow())
             .where(
-                Mark.id == self.id,
-                Mark.current_user == user)
+                Mark.id == self.id)
+            .execute()
         )
 
     def get_info(self):
