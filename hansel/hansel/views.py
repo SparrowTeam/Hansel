@@ -107,7 +107,7 @@ def upload_photo():
         photo_id=file_name
     )
     new_file.save(str(MEDIA_DIR / file_name))
-    return jsonify([file_name])
+    return jsonify({'image_id': file_name})
 
 @transaction_wrapper
 @app.route('/mark/<mark_id>/status', methods=['GET'])
